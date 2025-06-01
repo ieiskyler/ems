@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard - Email Blaster</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css') }}">
+</head>
+<body>
+    <div class="container" id="dashboard-container">
+        <h1>📧 Email Dashboard</h1>
+
+        <!--compose email modal added 10.00 30 may-->
+        <a href="{{ url_for('compose.compose') }}" class="compose-btn">+ Compose Email</a>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            <div>
+              {% for category, message in messages %}
+                <div class="flash flash-{{ category }}">{{ message }}</div>
+              {% endfor %}
+            </div>
+          {% endif %}
+        {% endwith %}
+
+        <div>
+            <div class="section-title">Sent Emails</div>
+            <ul class="email-list" id="sent-list"></ul>
+        </div>
+        <div>
+            <div class="section-title">Received Emails</div>
+            <ul class="email-list" id="received-list"></ul>
+        </div>
+    </div>
+
+    <!-- Modal for full message -->
+    <div id="message-modal" class="modal" style="display:none;">
+        <div class="modal-content">
+            <span class="close" id="close-modal">&times;</span>
+            <div id="modal-body"></div>
+        </div>
+    </div>
+
+    <script>
+        // Pass data from Flask to JS
+        const sentEmails = {{ sent_emails|tojson }};
+        const receivedEmails = {{ received_emails|tojson }};
+    </script>
+    <script src="{{ url_for('static', filename='dashboard.js') }}"></script>
+</body>
+</html>

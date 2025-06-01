@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard - Email Blaster</title>
+    <style>
+        html { overflow-y: scroll; }
+        body {
+            font-family: "Roboto", Arial, sans-serif;
+            background: #f5f5f5;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        .container {
+            max-width: 900px;
+            margin: 40px auto;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+            padding: 32px 40px 40px 40px;
+        }
+        .compose-btn {
+            display: inline-block;
+            background: #D89B94;
+            color: #fff;
+            padding: 10px 28px;
+            border-radius: 24px;
+            font-weight: bold;
+            text-decoration: none;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+            transition: background 0.2s;
+        }
+        .compose-btn:hover { background: #b86c6c; }
+        .section-title {
+            color: #444;
+            margin-top: 32px;
+            margin-bottom: 12px;
+            font-size: 1.3em;
+            letter-spacing: 0.5px;
+        }
+        .email-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            border-radius: 8px;
+            background: #fafbfc;
+            box-shadow: 0 1px 4px rgba(216,155,148,0.06);
+        }
+        .email-item {
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+            transition: background 0.15s;
+            padding: 0;
+        }
+        .email-item:last-child { border-bottom: none; }
+        .email-summary {
+            display: flex;
+            align-items: center;
+            padding: 16px 20px;
+            transition: background 0.15s;
+        }
+        .email-item:hover .email-summary { background: #f7eaea; }
+        .email-from, .email-to {
+            font-weight: bold;
+            color: #D89B94;
+            margin-right: 18px;
+            min-width: 120px;
+        }
+        .email-subject {
+            flex: 1;
+            color: #222;
+            font-size: 1.05em;
+        }
+        .email-date {
+            color: #888;
+            font-size: 0.98em;
+            margin-left: 18px;
+            min-width: 120px;
+            text-align: right;
+        }
+        .full-message-view {
+            max-width: 900px;
+            margin: 40px auto;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+            padding: 32px 40px 40px 40px;
+            animation: fadeIn 0.2s;
+        }
+        .back-btn {
+            display: inline-block;
+            background: #eee;
+            color: #D89B94;
+            border: none;
+            border-radius: 20px;
+            padding: 8px 22px;
+            font-size: 1em;
+            font-weight: bold;
+            margin-bottom: 24px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .back-btn:hover { background: #f7eaea; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px);}
+            to { opacity: 1; transform: translateY(0);}
+        }
+        .email-body-content * { max-width: 100%; box-sizing: border-box; }
+        .email-body-content img { max-width: 100%; height: auto; display: block; }
+        .flash {
+            padding: 10px 15px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+        .flash-success { background: #d4edda; color: #155724; }
+        .flash-error { background: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+    <div class="container" id="dashboard-container">
+        <h1>📧 Email Dashboard</h1>
+        <a href="{{ url_for('compose.compose') }}" class="compose-btn">+ Compose Email</a>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            <div>
+              {% for category, message in messages %}
+                <div class="flash flash-{{ category }}">{{ message }}</div>
+              {% endfor %}
+            </div>
+          {% endif %}
+        {% endwith %}
+
+        <div>
+            <div class="section-title">Sent Emails</div>
+            <ul class="email-list" id="sent-list">
+                {% for email in sent_emails %}
+                <li class="email-item" tabindex="0"
+                    data-to="{{ email['to'] }}"
+                    data-subject="{{ email['subject'] }}"
+                    data-date="{{ email['date'] }}"
+                    data-snippet="{{ email['snippet']|default('')|e }}"
+                    data-body="{{ email['body']|default('')|tojson|safe }}"
+                    data-type="sent">
+                    <div class="email-summary">
+                        <span class="email-to" title="To">{{ email['to'] }}</span>
+                        <span class="email-subject">{{ email['subject'] }}</span>
+                        <span class="email-date">{{ email['date'] }}</span>
+                        <span class="email-status" style="margin-left:auto; min-width:70px; text-align:right; color:{{ 'red' if email['status']=='Unread' else '#888' }};">
+                            {{ email['status'] }}
+                        </span>
+                    </div>
+                </li>
+                {% else %}
+                <li style="padding:18px 20px; color:#aaa;">No sent emails found.</li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <div>
+            <div class="section-title">Received Emails</div>
+            <ul class="email-list" id="received-list">
+                {% for email in received_emails %}
+                <li class="email-item" tabindex="0"
+                    data-from="{{ email['from'] }}"
+                    data-subject="{{ email['subject'] }}"
+                    data-date="{{ email['date'] }}"
+                    data-snippet="{{ email['snippet']|default('')|e }}"
+                    data-body="{{ email['body']|default('')|tojson|safe }}"
+                    data-type="received">
+                    <div class="email-summary">
+                        <span class="email-from" title="From">{{ email['from'] }}</span>
+                        <span class="email-subject">{{ email['subject'] }}</span>
+                        <span class="email-date">{{ email['date'] }}</span>
+                        <span class="email-status" style="margin-left:auto; min-width:70px; text-align:right; color:{{ 'red' if email['status']=='Unread' else '#888' }};">
+                            {{ email['status'] }}
+                        </span>
+                    </div>
+                </li>
+                {% else %}
+                <li style="padding:18px 20px; color:#aaa;">No received emails found.</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+
+    <div id="full-message-view" style="display:none;"></div>
+
+    <script>
+    function showFullMessage(html) {
+        document.getElementById('dashboard-container').style.display = 'none';
+        var msgView = document.getElementById('full-message-view');
+        msgView.innerHTML = html;
+        msgView.style.display = 'block';
+        window.scrollTo(0,0);
+    }
+    function backToDashboard() {
+        document.getElementById('full-message-view').style.display = 'none';
+        document.getElementById('dashboard-container').style.display = 'block';
+        window.scrollTo(0,0);
+    }
+
+    // Delegate click events for both lists
+    document.getElementById('sent-list').addEventListener('click', handleEmailClick);
+    document.getElementById('received-list').addEventListener('click', handleEmailClick);
+
+    function handleEmailClick(e) {
+        let item = e.target.closest('.email-item');
+        if (item) {
+            let type = item.dataset.type;
+            let replyTo = type === 'sent' ? item.dataset.to : item.dataset.from;
+            let replySubject = "Re: " + item.dataset.subject;
+            let replyForm = `
+                <div class="full-message-view">
+                    <button class="back-btn" onclick="backToDashboard()">&larr; Back to Dashboard</button>
+                    <h2 style="color:#D89B94;">${type === 'sent' ? 'Sent Email' : 'Received Email'}</h2>
+                    ${type === 'sent'
+                        ? `<b>To:</b> ${item.dataset.to}<br>`
+                        : `<b>From:</b> ${item.dataset.from}<br>`
+                    }
+                    <b>Subject:</b> ${item.dataset.subject}<br>
+                    <b>Date:</b> ${item.dataset.date}<br>
+                    ${item.dataset.snippet ? `<b>Snippet:</b> <div style="margin-top:8px; color:#444;">${item.dataset.snippet}</div>` : ''}
+                    <hr>
+                    <div class="email-body-content" style="margin-top:12px; color:#222; word-break:break-word;">
+                        ${item.dataset.body || '<i>No body found.</i>'}
+                    </div>
+                    <hr>
+                    <button class="compose-btn" id="reply-btn" style="margin-top:18px;">Reply</button>
+                    <form id="reply-form" style="display:none; margin-top:18px;" method="POST" action="/reply/">
+                        <input type="hidden" name="to" value="${replyTo}">
+                        <input type="hidden" name="subject" value="${replySubject}">
+                        <label><b>To:</b> <input type="email" name="to_display" value="${replyTo}" disabled style="width:70%"></label><br><br>
+                        <label><b>Subject:</b> <input type="text" name="subject_display" value="${replySubject}" disabled style="width:70%"></label><br><br>
+                        <label><b>Message:</b><br>
+                        <textarea name="message" rows="7" style="width:90%;"></textarea></label><br>
+                        <button type="submit" class="compose-btn" style="margin-top:10px;">Send Reply</button>
+                    </form>
+                </div>
+            `;
+
+            showFullMessage(replyForm);
+
+            setTimeout(() => {
+                let replyBtn = document.getElementById('reply-btn');
+                let replyFormElem = document.getElementById('reply-form');
+                if (replyBtn && replyFormElem) {
+                    replyBtn.onclick = function() {
+                        replyFormElem.style.display = 'block';
+                        replyBtn.style.display = 'none';
+                    };
+                }
+            }, 100);
+        }
+    }
+    </script>
+</body>
+</html>

@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Blaster Web App</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='compose.css') }}">
+</head>
+<body>
+    <div class="container">
+        <button class="back-btn" onclick="window.location.href='{{ url_for('dashboard.dashboard') }}'">&larr; Back to Dashboard</button>
+        <h1>Compose</h1>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            <div>
+              {% for category, message in messages %}
+                <div class="flash flash-{{ category }}">{{ message }}</div>
+              {% endfor %}
+            </div>
+          {% endif %}
+        {% endwith %}
+
+        <form method="post">
+            <label>Recipients (format: email,name):</label>
+            <div id="recipients-tags" class="tags-input" tabindex="0">
+                <input type="text" id="recipients-input" placeholder="Type email,name and press Enter or comma" autocomplete="off">
+            </div>
+            <div id="recipients-feedback"></div>
+            <input type="hidden" name="recipients" id="recipients-hidden">
+
+            <label>Subject:</label>
+            <input type="text" name="subject">
+
+            <label>Message (HTML allowed, use {name} for personalization):</label>
+            <textarea name="message" rows="10"></textarea>
+
+            <button type="submit">Send Emails</button>
+        </form>
+
+        <div style="margin: 10px 0;">
+            <button type="button" id="remove-selected" style="background:#d32f2f;color:#fff;margin-right:10px;">Remove Selected</button>
+            <button type="button" id="remove-all" style="background:#888;color:#fff;">Remove All</button>
+        </div>
+
+        <div id="progress-container">
+            <div>
+                <div id="progress-bar">0%</div>
+            </div>
+            <div id="progress-status"></div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='compose.js') }}"></script>
+</body>
+</html>
