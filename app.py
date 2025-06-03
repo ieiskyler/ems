@@ -2,6 +2,10 @@ from flask import Flask
 import os
 import csv
 from dotenv import load_dotenv
+import logging
+
+
+logging.basicConfig(level=logging.INFO)
 load_dotenv(dotenv_path='~/Downloads/test/email-blaster/ems/.env')
 
 # Change this to 0 https and 1 for http
